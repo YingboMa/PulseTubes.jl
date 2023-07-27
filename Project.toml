@@ -3,7 +3,21 @@ uuid = "28de87f7-168a-4d44-9452-9df1766173c5"
 authors = ["Yingbo Ma <mayingbo5@gmail.com> and contributors"]
 version = "1.0.0-DEV"
 
+[deps]
+IfElse = "615f187c-cbe4-4ef1-ba3b-2fcf58d6d173"
+Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
+ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
+ModelingToolkitStandardLibrary = "16a59e39-deab-5bd0-87e4-056b12336739"
+Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
+
 [compat]
+IfElse = "0.1"
+Interpolations = "0.14"
+JLD2 = "0.4"
+ModelingToolkit = "8"
+ModelingToolkitStandardLibrary = "2"
+Symbolics = "5"
 julia = "1"
 
 [extras]
