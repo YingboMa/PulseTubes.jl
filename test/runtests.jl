@@ -1,6 +1,4 @@
 using PulseTubes
-using Test
+using SafeTestsets
 
-@testset "PulseTubes.jl" begin
-    # Write your tests here.
-end
+@safetestset "Property Tests" include("property_tests.jl")

@@ -37,6 +37,11 @@ function SinglePhaseGas(name)
     )
 end
 
+const Air = SinglePhaseGas("Air")
+const Nitrogen = SinglePhaseGas("Nitrogen")
+const Helium = SinglePhaseGas("Helium")
+const Hydrogen = SinglePhaseGas("Hydrogen")
+
 function ThermodynamicState(data::SinglePhaseGas; name)
     vars = @variables T(t) = 298.15 P(t) = 101325.0
     ODESystem(Equation[], t, vars, [], name = name)
@@ -55,7 +60,9 @@ end
 - `μ`: Viscosity [Pa s]
 """
 function BaseProperties(data::SinglePhaseGas; name)
-    @named state = ThermodynamicState(data)
+    systems = @named begin
+        state = ThermodynamicState(data)
+    end
     vars = @variables begin
         T(t)
         P(t)
@@ -80,5 +87,17 @@ function BaseProperties(data::SinglePhaseGas; name)
         k ~ conductivity(state, data)
         μ ~ viscosity(state, data)
     ]
-    compose(ODESystem(eqs, t, vars, []; name = name), state)
+    ODESystem(eqs, t, vars, []; name = name, systems)
 end
+
+@register_symbolic interpolate(_::Interpolations.AbstractInterpolationWrapper, x, y)
+interpolate(interp::Interpolations.AbstractInterpolationWrapper, x, y) = interp(x, y)
+density(state, data::SinglePhaseGas) = interpolate(data.Dmass, state.T, state.P)
+specific_internal_energy(state, data::SinglePhaseGas) =
+    interpolate(data.Umass, state.T, state.P)
+specific_entropy(state, data::SinglePhaseGas) = interpolate(data.Smass, state.T, state.P)
+specific_enthalpy(state, data::SinglePhaseGas) = interpolate(data.Hmass, state.T, state.P)
+specific_Cv(state, data::SinglePhaseGas) = interpolate(data.Cvmass, state.T, state.P)
+specific_Cp(state, data::SinglePhaseGas) = interpolate(data.Cpmass, state.T, state.P)
+conductivity(state, data::SinglePhaseGas) = interpolate(data.conductivity, state.T, state.P)
+viscosity(state, data::SinglePhaseGas) = interpolate(data.viscosity, state.T, state.P)
