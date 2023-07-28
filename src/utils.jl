@@ -5,7 +5,7 @@
 end
 
 @component function PartialDistributedVolume(; name, n = 2)
-    @named begin
+    systems = @named begin
         fluidVolumeInputs = RealInput(; nin = n)
     end
     fluidVolumes = collect(fluidVolumeInputs.u)
@@ -25,8 +25,10 @@ end
         push!(eqs, D(Us[i]) ~ Hb_flows[i] + Wb_flows[i] + Qb_flows[i])
         push!(eqs, D(ms[i]) ~ mb_flows[i])
     end
+    ODESystem(eqs; systems = [systems...;], name)
 end
 
+# PartialTwoPort just has two ports
 @component function PartialTwoPortFlow(; name, n = 2)
     @named port_a = FluidPort()
     @named port_b = FluidPort()
@@ -40,3 +42,44 @@ end
         dheights[1:n]
     end
 end
+
+function IdealFlowHeatTransfer(;name, state, n = 1)
+    systems = @named begin
+        states[1:n] = ThermodynamicState(state)
+        heatPorts[1:n] = HeatPort()
+    end
+    Medium.Temperature[n]  = Medium.temperature(states)
+    @parameters begin
+        surfaceAreas[1:n]
+        k [description="Heat transfer coefficient to ambient"]
+        T_ambient
+    end
+    @states begin
+        Q_flows(t)[1:n]
+        Ts(t)[1:n]
+    end
+    eqs = [Q_flows[i] ~ heatPorts[i].Q_flow + k*surfaceAreas[i]*(T_ambient - heatPorts[i].T) for i in 1:n]
+    append!(eqs, [Ts[i] ~ heatPorts[i].T for i in 1:n])
+    ODESystem(eqs; systems = [systems...;], name)
+end
+
+function DetailedPipeFlow(;name )
+end
+
+function PartialStaggeredFlowModel(;name, state, n = 2)
+end
+
+# DynamicPipe:
+# - extends PartialStraightPipe
+#   - extends PartialTwoPort [just two ports]
+#   - composes DetailedPipeFlow "Wall friction, gravity, momentum flow"
+# - extends PartialTwoPortFlow
+#   - extends PartialTwoPort [just two ports]
+#   - extends PartialDistributedVolume [Medium]
+#   - composes DetailedPipeFlow "Wall friction, gravity, momentum flow"
+#     - extends PartialGenericPipeFlow
+#       - PartialStaggeredFlowModel
+#       - WallFriction.Detailed
+# - composes IdealFlowHeatTransfer
+#   - extends PartialFlowHeatTransfer
+#     - extends PartialHeatTransfer [Medium]
